@@ -70,14 +70,6 @@ Data Protection Officer: A DPO has been formally appointed and can be reached at
 Data Transfers: Cross-border transfers are conducted under the EU-US Data Privacy Framework. In case of invalidation, Standard Contractual Clauses (SCCs) are incorporated by reference.
 CPRA Rights: Includes data erasure (Right to be Forgotten) and consumer data access, compliant with California Consumer Privacy Act (CCPA/CPRA). Data removal requests are handled within 30 days.`;
 
-// Create mock File objects for initial default documents to support multipart upload pipeline
-const isClient = typeof window !== "undefined";
-
-const createMockFile = (content: string, name: string): File | undefined => {
-  if (!isClient) return undefined;
-  return new File([content], name, { type: "text/plain" });
-};
-
 // Initial Mock Documents Data
 const INITIAL_DOCUMENTS: DocumentItem[] = [
   {
@@ -90,7 +82,6 @@ const INITIAL_DOCUMENTS: DocumentItem[] = [
     riskRating: "low",
     riskScore: 15,
     documentContent: ANNUAL_REPORT_CONTENT,
-    fileObject: createMockFile(ANNUAL_REPORT_CONTENT, "annual_report_2025.txt"),
     metadata: {
       title: "2025 Annual Financial Report",
       issuerOrParties: "Acme Corporation Inc.",
@@ -121,7 +112,6 @@ const INITIAL_DOCUMENTS: DocumentItem[] = [
     riskRating: "medium",
     riskScore: 48,
     documentContent: SERVICE_AGREEMENT_CONTENT,
-    fileObject: createMockFile(SERVICE_AGREEMENT_CONTENT, "service_agreement_vendor.txt"),
     metadata: {
       title: "Master Services Agreement (MSA)",
       issuerOrParties: "Global Tech Solutions & Apex Retail Inc.",
@@ -152,7 +142,6 @@ const INITIAL_DOCUMENTS: DocumentItem[] = [
     riskRating: "high",
     riskScore: 82,
     documentContent: GDPR_POLICY_CONTENT,
-    fileObject: createMockFile(GDPR_POLICY_CONTENT, "gdpr_privacy_policy.txt"),
     metadata: {
       title: "GDPR Compliance & Privacy Policy",
       issuerOrParties: "DataSphere Systems Ltd",
@@ -256,7 +245,21 @@ export default function SmartDocumentWorkspace() {
 
   // Initialize documents only on client-side to ensure constructor operations execute safely
   useEffect(() => {
-    setDocuments(INITIAL_DOCUMENTS);
+    const initializedDocs = INITIAL_DOCUMENTS.map((doc) => {
+      let mockFile: File | undefined = undefined;
+      if (doc.id === "doc-1") {
+        mockFile = new File([ANNUAL_REPORT_CONTENT], "annual_report_2025.txt", { type: "text/plain" });
+      } else if (doc.id === "doc-2") {
+        mockFile = new File([SERVICE_AGREEMENT_CONTENT], "service_agreement_vendor.txt", { type: "text/plain" });
+      } else if (doc.id === "doc-3") {
+        mockFile = new File([GDPR_POLICY_CONTENT], "gdpr_privacy_policy.txt", { type: "text/plain" });
+      }
+      return {
+        ...doc,
+        fileObject: mockFile,
+      };
+    });
+    setDocuments(initializedDocs);
   }, []);
 
   // Auto-scroll chat to bottom
@@ -661,35 +664,6 @@ Return ONLY the raw JSON block. Do not write any explanations before or after th
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#070b13] text-slate-100 font-sans antialiased">
-      {/* Global CSS injected for custom scrollbar aesthetics */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.3);
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(148, 163, 184, 0.15);
-            border-radius: 9999px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(148, 163, 184, 0.3);
-          }
-          @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.5; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(0.95); opacity: 0.5; }
-          }
-          .pulse-border {
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
-            animation: pulse-ring 2s infinite ease-in-out;
-          }
-        `
-      }} />
-
       {/* LEFT SIDEBAR: Document Upload Zone */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-900 bg-[#0B0F19] transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
